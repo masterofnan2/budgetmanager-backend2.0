@@ -10,6 +10,8 @@ Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
     Route::post('/signup', [AuthController::class, 'signup']);
     Route::post('/verify_email_conformity', [AuthController::class, 'verifyEmailConformity']);
+    Route::post('/forgotten-password', [AuthController::class, 'forgottenPassword']);
+    Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 });
 
 Route::middleware('auth:sanctum')->group(function () {

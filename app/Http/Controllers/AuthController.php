@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Actions\AuthActions;
 use App\Actions\CycleActions;
 use App\Actions\Mail\ConfirmationActions;
+use App\Actions\Mail\PasswordResetActions;
+use App\Actions\TokenActions;
 use App\Actions\UserActions;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\SignupRequest;
@@ -12,6 +14,7 @@ use App\Models\User;
 use Hash;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -19,13 +22,7 @@ class AuthController extends Controller
     public function verifyEmailConformity(Request $request, AuthActions $authActions)
     {
         $request->validate(['email' => 'required|email|unique:users']);
-        $response = $authActions->email_is_valable($request->input('email'));
-
-        if (!$response || $response->deliverability !== 'DELIVERABLE') {
-            throw ValidationException::withMessages(['email' => 'Email is not valid']);
-        }
-
-        return response()->json(['valable' => boolval($response)]);
+        response()->json(['valid' => $authActions->validateEmail($request->input('email'))]);
     }
 
     public function makeEmailConfirmation(ConfirmationActions $confirmationActions)
@@ -45,11 +42,9 @@ class AuthController extends Controller
         return response()->json(['matched' => $matched]);
     }
 
-    public function login(LoginRequest $request, CycleActions $CycleActions)
+    public function login(LoginRequest $request, CycleActions $CycleActions, TokenActions $tokenActions)
     {
         $validated = $request->validated();
-        $user_agent = $_SERVER['HTTP_USER_AGENT'];
-
         $user = User::where('email', $validated['email'])->first();
 
         if (!$user || !Hash::check($validated['password'], $user->password)) {
@@ -63,17 +58,16 @@ class AuthController extends Controller
             ->getCurrent();
 
         return response()->json([
-            'token' => $user->createToken($user_agent)->plainTextToken,
+            'token' => $tokenActions->setUser($user)->createToken(),
             'user' => $user
         ]);
     }
 
-    public function signup(SignupRequest $request, CycleActions $CycleActions)
+    public function signup(SignupRequest $request, CycleActions $CycleActions, TokenActions $tokenActions)
     {
         $validated = $request->validated();
         $validated['password'] = Hash::make($validated['password']);
 
-        $user_agent = $_SERVER['HTTP_USER_AGENT'];
         $user = User::create($validated);
 
         $CycleActions
@@ -81,7 +75,7 @@ class AuthController extends Controller
             ->createCycle();
 
         return response()->json([
-            'token' => $user->createToken($user_agent)->plainTextToken,
+            'token' => $tokenActions->setUser($user)->createToken(),
             'user' => $user
         ]);
     }
@@ -93,6 +87,45 @@ class AuthController extends Controller
 
         return response()->json([
             'user' => $user
+        ]);
+    }
+
+    public function forgottenPassword(Request $request, AuthActions $authActions, PasswordResetActions $passwordResetActions)
+    {
+        $request->validate(['email' => 'required|email|exists:users']);
+
+        $email = $request->input('email');
+        $emailIsValid = $authActions->validateEmail($email);
+
+        if ($emailIsValid) {
+            $sent = $passwordResetActions
+                ->setUser(User::where('email', $email)->first())
+                ->makePasswordReset();
+
+            return response()->json(['sent' => $sent]);
+        }
+    }
+
+    public function resetPassword(Request $request, PasswordResetActions $passwordResetActions, TokenActions $tokenActions)
+    {
+        $request->validate([
+            'token' => 'exists:password_reset_tokens',
+            'password' => 'required|min:6|max:40|confirmed',
+        ]);
+
+        $token = $request->input('token');
+        $newPassword = $request->input('password');
+
+        $passwordResetActions
+            ->setToken($token)
+            ->setNewPassword($newPassword)
+            ->reset();
+
+        $user = $passwordResetActions->get('user');
+
+        return response()->json([
+            'user' => $user,
+            'token' => $tokenActions->setUser($user)->createToken()
         ]);
     }
 }

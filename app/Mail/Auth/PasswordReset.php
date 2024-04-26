@@ -1,22 +1,21 @@
 <?php
 
-namespace App\Mail;
+namespace App\Mail\Auth;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class EmailConfirmation extends Mailable
+class PasswordReset extends Mailable
 {
     use Queueable, SerializesModels;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(public $code)
+    public function __construct(public $token)
     {
         //
     }
@@ -28,7 +27,7 @@ class EmailConfirmation extends Mailable
     {
         return new Envelope(
             from: '000budgetmanager@gmail.com',
-            subject: 'Email Confirmation',
+            subject: 'Password Reset',
         );
     }
 
@@ -38,7 +37,7 @@ class EmailConfirmation extends Mailable
     public function content(): Content
     {
         return new Content(
-            markdown: 'emails.confirmation',
+            markdown: 'emails.auth.password-reset',
         );
     }
 

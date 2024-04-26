@@ -3,6 +3,7 @@
 namespace App\Actions;
 
 use App\Models\Category;
+use App\Models\Cycle;
 use Auth;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Validation\ValidationException;
@@ -48,16 +49,15 @@ class CategoryActions extends Actions
     protected $id;
     protected $cycle_id;
 
-
     private function createDefaultCategories(): array
     {
         $defaultCategories = [];
-        $user_id = $this->user_id ?? Auth::user()->id;
-        $cycle_id = Helper::getCycle()->id;
+        $userId = $this->user_id ?? Auth::user()->id;
+        $cycleId = Helper::getCycle()->id;
 
         foreach (DEFAULTCATEGORIES as $defaultCategory) {
-            $defaultCategory['user_id'] = $user_id;
-            $defaultCategory['cycle_id'] = $cycle_id;
+            $defaultCategory['user_id'] = $userId;
+            $defaultCategory['cycle_id'] = $cycleId;
 
             $defaultCategories[] = Category::create($defaultCategory);
         }
@@ -65,21 +65,23 @@ class CategoryActions extends Actions
         return $defaultCategories;
     }
 
-    private function createCategories(): array
+    private function createCategories(?CycleActions $cycleActions = new CycleActions): array
     {
-        $cycle_id = Helper::getCycle()->id;
+        $cycleId = $cycleActions->getCurrent()->id;
+        $previousCycle = $cycleActions->previousCycle();
         $categories = [];
 
-        if ($cycle_id > 1) {
-            $previous_cycle_id = --$cycle_id;
-            $backupCategories = Category::where('cycle_id', $previous_cycle_id)
+        if ($previousCycle && isset($previousCycle->id)) {
+            $previousCycleId = $previousCycle->id;
+
+            $backupCategories = Category::where('cycle_id', $previousCycleId)
                 ->withTrashed()
                 ->get()
                 ->toArray();
 
             if (count($backupCategories) > 0) {
                 foreach ($backupCategories as $backupCategory) {
-                    $backupCategory['cycle_id'] = $cycle_id;
+                    $backupCategory['cycle_id'] = $cycleId;
                     $backupCategory['deleted_at'] = null;
 
                     unset($backupCategory['created_at'], $backupCategory['updated_at']);

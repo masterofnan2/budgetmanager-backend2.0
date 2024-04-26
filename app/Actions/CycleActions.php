@@ -151,4 +151,14 @@ class CycleActions extends Actions
 
         return $cycle->save();
     }
+
+    public function previousCycle()
+    {
+        $cycle = Cycle::where('id', '!==', $this->getCurrent()->id)
+            ->where('user_id', Auth::user()->id)
+            ->latest()
+            ->first();
+
+        return $cycle;
+    }
 }

@@ -2,12 +2,18 @@
 
 namespace App\Actions;
 
+use Illuminate\Database\Eloquent\Model;
+
 abstract class Actions
 {
-    private function getUniqueProperty(string $propertyName): string|int|float|bool|null
+    /**
+     * @param string property
+     * returns the value of the unique property
+     */
+    private function getUniqueProperty(string $property)
     {
-        if (property_exists($this, $propertyName)) {
-            return $this->$propertyName;
+        if (property_exists($this, $property)) {
+            return $this->$property;
         } else {
             return false;
         }
@@ -41,7 +47,7 @@ abstract class Actions
 
     /**
      * @param null|string properties
-     * @return array|int|string|float|null|bool array if many properties are mentionned or the value of the unique property
+     * returns an array if many properties are mentionned or the value of the unique property
      */
     public function get()
     {
@@ -49,7 +55,7 @@ abstract class Actions
         $instanceData = [];
 
         if (!empty($args) && count($args) === 1) {
-            $this->getUniqueProperty($args[0]);
+            $instanceData = $this->getUniqueProperty($args[0]);
         } else if (!empty($args) && count($args) > 1) {
             $instanceData = $this->getListOfProperties($args);
         } else {

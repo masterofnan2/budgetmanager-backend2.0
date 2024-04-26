@@ -8,9 +8,9 @@ use Illuminate\Validation\ValidationException;
 
 class AuthActions extends Actions
 {
-    public function email_is_valable($email): \stdClass
+    public function validateEmail($email): bool
     {
-        $CERTIFICATE = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'resources' . DIRECTORY_SEPARATOR . 'certificates' . DIRECTORY_SEPARATOR . 'check-email.crt';
+        // $CERTIFICATE = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'resources' . DIRECTORY_SEPARATOR . 'certificates' . DIRECTORY_SEPARATOR . 'check-email.crt';
 
         $curl = curl_init();
         curl_setopt_array($curl, [
@@ -36,8 +36,13 @@ class AuthActions extends Actions
 
         if ($err) {
             throw ValidationException::withMessages(['email' => 'Failed to verify email.']);
-        } else {
-            return json_decode($response);
         }
+
+        $response = json_decode($response);
+        if (!(isset($response->deliverability) && $response->deliverability === 'DELIVERABLE')) {
+            throw ValidationException::withMessages(['email' => 'Email is not valid']);
+        }
+
+        return true;
     }
 }

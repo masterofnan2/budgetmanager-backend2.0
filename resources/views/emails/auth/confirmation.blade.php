@@ -6,7 +6,7 @@ One step away from setting up your account
 </x-mail::panel>
 is your code to confirm your identity.
 
-<x-mail::button :url="'https://budgetmanager.free.nf/dashboard'" color="primary">
+<x-mail::button :url="{{env('FRONTEND_URL') . '/dashboard'}}" color="primary">
 Go to Dashboard
 </x-mail::button>
 

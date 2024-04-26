@@ -12,11 +12,9 @@ class Helper
         return $datetime->format('Y-m-d H:i:s');
     }
 
-    public static function getCycle(): Cycle|Model
+    public static function getCycle(?CycleActions $cycleActions = new CycleActions): Cycle|Model
     {
-        $cycleActions = new CycleActions;
         $cycle = $cycleActions->getCurrent();
-
         return $cycle;
     }
 }
