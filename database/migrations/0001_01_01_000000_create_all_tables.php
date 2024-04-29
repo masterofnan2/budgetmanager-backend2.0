@@ -45,6 +45,8 @@ return new class extends Migration {
             $table->foreignId('cycle_id');
             $table->timestamps();
             $table->dateTime('deleted_at')->nullable();
+            $table->string('description')->nullable();
+            $table->string('image')->nullable();
         });
 
         Schema::create('expenses', function (Blueprint $table) {
@@ -61,7 +63,6 @@ return new class extends Migration {
             $table->id();
             $table->float('amount', 2);
             $table->foreignId('user_id');
-            $table->foreignId('category_id')->nullable();
             $table->foreignId('cycle_id');
             $table->timestamps();
         });

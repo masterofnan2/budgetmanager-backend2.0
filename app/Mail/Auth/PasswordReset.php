@@ -12,12 +12,14 @@ class PasswordReset extends Mailable
 {
     use Queueable, SerializesModels;
 
+    protected $resetUrl;
+
     /**
      * Create a new message instance.
      */
-    public function __construct(public $token)
+    public function __construct(string $token)
     {
-        //
+        $this->resetUrl = env('FRONTEND_URL') . '/auth/reset-password/' . $token;
     }
 
     /**
@@ -38,6 +40,9 @@ class PasswordReset extends Mailable
     {
         return new Content(
             markdown: 'emails.auth.password-reset',
+            with: [
+                'resetUrl' => $this->resetUrl
+            ]
         );
     }
 

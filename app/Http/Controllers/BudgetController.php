@@ -27,4 +27,10 @@ class BudgetController extends Controller
 
         return response()->json(['affected' => $affected]);
     }
+
+    public function getAvailableCategoryBudget(BudgetActions $budgetActions)
+    {
+        $available = $budgetActions->availableCategoryBudget();
+        return response()->json(['available' => $available]);
+    }
 }

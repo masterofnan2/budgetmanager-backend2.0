@@ -6,6 +6,7 @@ use App\Models\Budget;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class BudgetActions extends Actions
 {
@@ -58,15 +59,8 @@ class BudgetActions extends Actions
 
     public function getInitial(): Budget|Model
     {
-        $Budget = new Budget;
         $cycle_id = Helper::getCycle()->id;
-
-        $currentBudget = $Budget
-            ->where([
-                'category_id' => null,
-                'cycle_id' => $cycle_id
-            ])
-            ->first();
+        $currentBudget = Budget::where('cycle_id', $cycle_id)->first();
 
         if (!$currentBudget) {
             $currentBudget = $this->createBudget();
@@ -109,6 +103,8 @@ class BudgetActions extends Actions
         $initial = $this->getInitial();
         $categoriesBudgetSum = $categoryActions->categoriesBudgetSum();
 
-        return ($initial->amount - $categoriesBudgetSum);
+        $available = intval($initial->amount) - $categoriesBudgetSum;
+
+        return $available;
     }
 }

@@ -14,8 +14,7 @@ const DEFAULTCATEGORIES = [
         'user_id' => null,
         'budget' => 0,
         'cycle_id' => null,
-        'description' => 'expenses relative to transport, such as fuel, bus subscription, ...',
-        'icon' => 'transport',
+        'description' => 'expenses relative to transport, such as fuel, bus subscription, ...'
     ],
     [
         'name' => 'food',
@@ -23,7 +22,6 @@ const DEFAULTCATEGORIES = [
         'budget' => 0,
         'cycle_id' => null,
         'description' => 'restaurants, provisions, goods, supplies, or anything that comes to food.',
-        'icon' => 'food',
     ],
     [
         'name' => 'bills',
@@ -31,7 +29,6 @@ const DEFAULTCATEGORIES = [
         'budget' => 0,
         'cycle_id' => null,
         'description' => 'electricity, loan, internet subscriptions, gym, etc...',
-        'icon' => 'bills',
     ],
     [
         'name' => 'entertainment',
@@ -39,7 +36,6 @@ const DEFAULTCATEGORIES = [
         'budget' => 0,
         'cycle_id' => null,
         'description' => 'anything but necessities, may concern accessories, new clothes, shoes, ...',
-        'icon' => 'entertainment',
     ]
 ];
 
@@ -49,16 +45,22 @@ class CategoryActions extends Actions
     protected $id;
     protected $cycle_id;
 
+    private function addStaticAssetsTo(array $categoryData)
+    {
+        $staticAssets = [
+            'user_id' => $this->user_id ?? Auth::user()->id,
+            'cycle_id' => Helper::getCycle()->id
+        ];
+
+        $categoryData = array_merge($categoryData, $staticAssets);
+    }
+
     private function createDefaultCategories(): array
     {
         $defaultCategories = [];
-        $userId = $this->user_id ?? Auth::user()->id;
-        $cycleId = Helper::getCycle()->id;
 
         foreach (DEFAULTCATEGORIES as $defaultCategory) {
-            $defaultCategory['user_id'] = $userId;
-            $defaultCategory['cycle_id'] = $cycleId;
-
+            $this->addStaticAssetsTo($defaultCategory);
             $defaultCategories[] = Category::create($defaultCategory);
         }
 
@@ -120,16 +122,38 @@ class CategoryActions extends Actions
         return $categories;
     }
 
-    public function categoriesBudgetSum()
+    public function categoriesBudgetSum(): int
     {
         $cycle = Helper::getCycle();
         $sum = Category::where('cycle_id', $cycle->id)->sum('budget');
 
-        return $sum;
+        return intval($sum);
     }
 
     public function addCategory(array $category)
     {
+        $budgetActions = new BudgetActions;
+        $available = $budgetActions->availableCategoryBudget();
+
+        if ($category['budget'] > $available) {
+            throw ValidationException::withMessages(['budget' => 'The budget is greater than the maximum available']);
+        }
+
+        $this->addStaticAssetsTo($category);
         return Category::create($category);
+    }
+
+    public function updateCategory(array $category): bool
+    {
+        $budgetActions = new BudgetActions;
+        $available = $budgetActions->availableCategoryBudget();
+
+        $targetCategory = Category::find($category['id']);
+
+        if ($category['budget'] > ($available + $targetCategory->budget)) {
+            throw ValidationException::withMessages(['budget' => 'The budget is greater than the maximum available']);
+        }
+
+        return $targetCategory->update($category);
     }
 }

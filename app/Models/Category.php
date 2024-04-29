@@ -18,6 +18,6 @@ class Category extends Model
         'cycle_id',
         'budget',
         'description',
-        'icon'
+        'image'
     ];
 }

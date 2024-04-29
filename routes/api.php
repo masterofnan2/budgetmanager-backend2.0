@@ -25,6 +25,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/', [BudgetController::class, 'get']);
         Route::get('/balance', [BudgetController::class, 'getBalance']);
         Route::post('/set', [BudgetController::class, 'set']);
+
+        Route::prefix('/category')->group(function () {
+            Route::get('/available', [BudgetController::class, 'getAvailableCategoryBudget']);
+        });
     });
 
     Route::prefix('cycle')->group(function () {
@@ -35,5 +39,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('category')->group(function () {
         Route::get('/currents', [CategoryController::class, 'getCurrents']);
         Route::delete('/delete/{id}', [CategoryController::class, 'delete']);
+        Route::post('/create', [CategoryController::class, 'add']);
+        Route::post('/edit', [CategoryController::class, 'edit']);
     });
 });

@@ -1,14 +1,12 @@
 <x-mail::message>
-One step away from resetting your password
-
+Click on the following link to complete your password resetting
+ 
 <x-mail::panel>
-You are not the author of this action?
+    You can ignore this email if You are not the author of this action.
 </x-mail::panel>
 
-If you didn't request a password reinitialization, you can ignore this email.
-
-<x-mail::button :url="{{env('FRONTEND_URL') . '/auth/password-reset/' . $token}}" color="primary">
-reset password
+<x-mail::button :url="$resetUrl">
+Reset password
 </x-mail::button>
 
 Thanks,<br>

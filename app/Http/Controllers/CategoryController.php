@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Actions\BudgetActions;
 use App\Actions\CategoryActions;
+use App\Http\Requests\Category\AddCategoryRequest;
+use App\Http\Requests\Category\CategoryRequest;
+use App\Http\Requests\Category\UpdateCategoryRequest;
 use App\Models\Category;
-use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
 class CategoryController extends Controller
@@ -22,15 +24,21 @@ class CategoryController extends Controller
         return response()->json(compact('deleted'));
     }
 
-    public function add(Request $request, CategoryActions $categoryActions, BudgetActions $budgetActions)
+    public function add(AddCategoryRequest $request, CategoryActions $categoryActions)
     {
-        $request->validate(['image' => 'image/*']);
-        $budget = $request->input('budget');
+        $data = $request->all();
 
-        if ($budget > $budgetActions->availableCategoryBudget()) {
-            throw ValidationException::withMessages(['budget' => 'The budget is greater than the maximum available']);
-        }
+        return response()->json([
+            'category' => $categoryActions->addCategory($data)
+        ]);
+    }
 
-        return response()->json(['category' => $categoryActions->addCategory($request->all())]);
+    public function edit(UpdateCategoryRequest $request, CategoryActions $categoryActions)
+    {
+        $data = $request->all();
+
+        return response()->json([
+            'updated' => $categoryActions->updateCategory($data),
+        ]);
     }
 }

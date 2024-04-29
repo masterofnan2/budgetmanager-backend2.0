@@ -116,16 +116,17 @@ class AuthController extends Controller
         $token = $request->input('token');
         $newPassword = $request->input('password');
 
-        $passwordResetActions
+        $user = $passwordResetActions
             ->setToken($token)
             ->setNewPassword($newPassword)
-            ->reset();
-
-        $user = $passwordResetActions->get('user');
+            ->reset()
+            ->get('user');
 
         return response()->json([
             'user' => $user,
-            'token' => $tokenActions->setUser($user)->createToken()
+            'token' => $tokenActions
+                ->setUser($user)
+                ->createToken()
         ]);
     }
 }
