@@ -11,7 +11,6 @@ class CycleActions extends Actions
     protected $user_id;
     protected $start_date;
     protected $end_date;
-    protected $renewal_frequency_id;
 
     public function __construct()
     {
@@ -20,7 +19,6 @@ class CycleActions extends Actions
         $this->user_id = $user ? $user->id : null;
         $this->start_date = date_create();
         $this->end_date = date_add(date_create(), date_interval_create_from_date_string('1 month'));
-        $this->renewal_frequency_id = 1;
     }
 
     public function setUserId($user_id): CycleActions
@@ -41,17 +39,10 @@ class CycleActions extends Actions
         return $this;
     }
 
-    public function setRenewalFrequencyId($renewal_frequency_id): CycleActions
-    {
-        $this->renewal_frequency_id = $renewal_frequency_id;
-        return $this;
-    }
-
     public function recycle()
     {
         $Cycle = new Cycle;
         $previousCycle = $Cycle
-            ->with('renewalFrequency')
             ->where(['user_id' => Auth::user()->id])
             ->latest('id')
             ->first();
@@ -62,46 +53,39 @@ class CycleActions extends Actions
 
             $previousCycleStartDate = date_create($previousCycle->start_date);
             $previousCycleEndDate = date_create($previousCycle->end_date);
-            $previousCycleEndDateIsoString = $previousCycle->end_date;
+            $previousCycleEndDateIso = $previousCycle->end_date;
 
-            $newStartDate = $newStartDateIsoString = $newEndDate = $newEndDateIsoString = null;
+            $newStartDate = $newStartDateIso = $newEndDate = $newEndDateIsoString = null;
 
-            $previousCycleInterval = $previousCycle->renewalFrequency->interval ?
-                date_interval_create_from_date_string($previousCycle->renewalFrequency->interval) : null;
-
-            if (!$previousCycleInterval) {
-                $datesDifference = date_diff($previousCycleStartDate, $previousCycleEndDate)->format('d') . ' days';
-                $previousCycleInterval = date_interval_create_from_date_string($datesDifference);
-            }
+            $datesDifference = date_diff($previousCycleStartDate, $previousCycleEndDate)->format('d') . ' days';
+            $previousCycleInterval = date_interval_create_from_date_string($datesDifference);
 
             $previousCycleEndDatePlusInterval = date_add(date_create($previousCycle->end_date), $previousCycleInterval);
 
             if (Helper::getIsoString($previousCycleEndDatePlusInterval) < $dateNowIsoString) {
                 $newStartDate = $dateNow;
-                $newStartDateIsoString = $dateNowIsoString;
+                $newStartDateIso = $dateNowIsoString;
             } else {
                 $newStartDate = $previousCycleEndDate;
-                $newStartDateIsoString = $previousCycleEndDateIsoString;
+                $newStartDateIso = $previousCycleEndDateIso;
             }
 
             $newEndDate = date_add($newStartDate, $previousCycleInterval);
             $newEndDateIsoString = Helper::getIsoString($newEndDate);
 
-            return $this
-                ->setStartDate($newStartDateIsoString)
-                ->setEndDate($newEndDateIsoString)
-                ->createCycle();
-
-        } else {
-            return $this->createCycle();
+            $this
+                ->setStartDate($newStartDateIso)
+                ->setEndDate($newEndDateIsoString);
         }
+
+        return $this->createCycle();
     }
 
     public function createCycle()
     {
         $defaultCycle = $this->get();
-
         $cycle = Cycle::create($defaultCycle);
+
         return $cycle;
     }
 
@@ -129,25 +113,23 @@ class CycleActions extends Actions
         $_startDate = date_create($startDate);
         $_endDate = date_create($endDate);
 
-        $endDate_ = $_endDate->format('Y-m-d H:i:s');
+        $_endDateIso = Helper::getIsoString($_endDate);
 
-        if ($startDate > $endDate_ || date_diff($_startDate, $_endDate)->days < 1) {
+        if ($startDate > $_endDateIso || date_diff($_startDate, $_endDate)->days < 1) {
             throw ValidationException::withMessages([
                 'end_date' => 'the end date should be at least a day after the start date'
             ]);
         }
 
         return [
-            'end_date' => $endDate_
+            'end_date' => $_endDateIso
         ];
     }
 
     public function save(): bool
     {
         $cycle = Helper::getCycle();
-
         $cycle->end_date = $this->end_date;
-        $cycle->renewal_frequency_id = $this->renewal_frequency_id;
 
         return $cycle->save();
     }

@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Category;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rules\File;
 
 class AddCategoryRequest extends FormRequest
 {
@@ -24,7 +25,8 @@ class AddCategoryRequest extends FormRequest
         return [
             'name' => 'required|min:2',
             'description' => 'required|min:10',
-            'budget' => 'required|min:1'
+            'budget' => 'required|min:1',
+            'image' => ['nullable', File::image()]
         ];
     }
 }

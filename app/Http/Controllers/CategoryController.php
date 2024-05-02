@@ -26,7 +26,11 @@ class CategoryController extends Controller
 
     public function add(AddCategoryRequest $request, CategoryActions $categoryActions)
     {
-        $data = $request->all();
+        $data = $request->validated();
+
+        if ($request->hasFile('image')) {
+            $data['image'] = $categoryActions->storeImage($request->image);
+        }
 
         return response()->json([
             'category' => $categoryActions->addCategory($data)
@@ -35,7 +39,11 @@ class CategoryController extends Controller
 
     public function edit(UpdateCategoryRequest $request, CategoryActions $categoryActions)
     {
-        $data = $request->all();
+        $data = $request->input();
+
+        if ($request->hasFile('image')) {
+            $data['image'] = $categoryActions->storeImage($request->image);
+        }
 
         return response()->json([
             'updated' => $categoryActions->updateCategory($data),

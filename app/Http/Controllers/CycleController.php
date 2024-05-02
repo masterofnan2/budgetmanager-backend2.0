@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Actions\CycleActions;
 use Illuminate\Http\Request;
 
-const CUSTOMRENEWALFREQUENCY = 3;
 
 class CycleController extends Controller
 {
@@ -23,7 +22,6 @@ class CycleController extends Controller
         return response()->json([
             'affected' => $cycleActions
                 ->setEndDate($validated['end_date'])
-                ->setRenewalFrequencyId(CUSTOMRENEWALFREQUENCY)
                 ->save()
         ]);
     }

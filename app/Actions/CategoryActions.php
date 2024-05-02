@@ -6,6 +6,8 @@ use App\Models\Category;
 use App\Models\Cycle;
 use Auth;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 const DEFAULTCATEGORIES = [
@@ -14,7 +16,8 @@ const DEFAULTCATEGORIES = [
         'user_id' => null,
         'budget' => 0,
         'cycle_id' => null,
-        'description' => 'expenses relative to transport, such as fuel, bus subscription, ...'
+        'description' => 'expenses relative to transport, such as fuel, bus subscription, ...',
+        'image' => 'images/categories/VwPs49UQI81eLQwkXreeFwiyeVlP0GJQIk6FOV5j.svg'
     ],
     [
         'name' => 'food',
@@ -22,6 +25,7 @@ const DEFAULTCATEGORIES = [
         'budget' => 0,
         'cycle_id' => null,
         'description' => 'restaurants, provisions, goods, supplies, or anything that comes to food.',
+        'image' => 'images/categories/kmtTC5UhvMghApo0ioWzUdyHLYV2tEZ3dJr2HHDb.svg'
     ],
     [
         'name' => 'bills',
@@ -29,6 +33,7 @@ const DEFAULTCATEGORIES = [
         'budget' => 0,
         'cycle_id' => null,
         'description' => 'electricity, loan, internet subscriptions, gym, etc...',
+        'image' => 'images/categories/SAXOx1oSZAhYtusWkNVtB918ta2uDbm1blqBznLp.svg'
     ],
     [
         'name' => 'entertainment',
@@ -36,23 +41,22 @@ const DEFAULTCATEGORIES = [
         'budget' => 0,
         'cycle_id' => null,
         'description' => 'anything but necessities, may concern accessories, new clothes, shoes, ...',
+        'image' => 'images/categories/36R7tV22mr6FMcJl79Pv8pqGvwUY6T47GLZXOVQN.svg'
     ]
 ];
 
 class CategoryActions extends Actions
 {
     protected $user_id;
-    protected $id;
-    protected $cycle_id;
 
-    private function addStaticAssetsTo(array $categoryData)
+    private function withStaticAssets(array $categoryData)
     {
         $staticAssets = [
             'user_id' => $this->user_id ?? Auth::user()->id,
             'cycle_id' => Helper::getCycle()->id
         ];
 
-        $categoryData = array_merge($categoryData, $staticAssets);
+        return array_merge($categoryData, $staticAssets);
     }
 
     private function createDefaultCategories(): array
@@ -60,8 +64,7 @@ class CategoryActions extends Actions
         $defaultCategories = [];
 
         foreach (DEFAULTCATEGORIES as $defaultCategory) {
-            $this->addStaticAssetsTo($defaultCategory);
-            $defaultCategories[] = Category::create($defaultCategory);
+            $defaultCategories[] = Category::create($this->withStaticAssets($defaultCategory));
         }
 
         return $defaultCategories;
@@ -96,6 +99,25 @@ class CategoryActions extends Actions
         }
 
         return $this->createDefaultCategories();
+    }
+
+    private function deleteImage(string $imagePath): bool
+    {
+        $image = 'public/' . $imagePath;
+
+        if (Storage::exists($image)) {
+            return Storage::delete($image);
+        }
+
+        return false;
+    }
+
+    public function storeImage(UploadedFile $image): string
+    {
+        $path = $image->store('public/images/categories');
+        $path = str_replace('public/', '', $path);
+
+        return $path;
     }
 
     public function getCurrents(): array|Collection
@@ -139,8 +161,7 @@ class CategoryActions extends Actions
             throw ValidationException::withMessages(['budget' => 'The budget is greater than the maximum available']);
         }
 
-        $this->addStaticAssetsTo($category);
-        return Category::create($category);
+        return Category::create($this->withStaticAssets($category));
     }
 
     public function updateCategory(array $category): bool
@@ -152,6 +173,12 @@ class CategoryActions extends Actions
 
         if ($category['budget'] > ($available + $targetCategory->budget)) {
             throw ValidationException::withMessages(['budget' => 'The budget is greater than the maximum available']);
+        }
+
+        if ($category['image']) {
+            if ($targetCategory->image && $category['image'] !== $targetCategory->image) {
+                $this->deleteImage($targetCategory->image);
+            }
         }
 
         return $targetCategory->update($category);

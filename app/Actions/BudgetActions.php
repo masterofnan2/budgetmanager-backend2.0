@@ -12,7 +12,6 @@ class BudgetActions extends Actions
 {
     protected $amount;
     protected $user_id;
-    protected $category_id;
     protected $cycle_id;
 
     public function setUserId($user_id): BudgetActions
@@ -26,11 +25,6 @@ class BudgetActions extends Actions
         return $this;
     }
 
-    public function setCategoryId($category_id): BudgetActions
-    {
-        $this->category_id = $category_id;
-        return $this;
-    }
 
     public function setCycleId($cycle_id): BudgetActions
     {
@@ -42,7 +36,6 @@ class BudgetActions extends Actions
     {
         $this->amount = 0;
         $this->user_id = Auth::user()->id;
-        $this->category_id = null;
         $this->cycle_id = null;
     }
 
@@ -94,7 +87,6 @@ class BudgetActions extends Actions
 
         return DB::table('budgets')
             ->where('cycle_id', $cycle_id)
-            ->where('category_id', null)
             ->update($changes);
     }
 

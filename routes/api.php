@@ -6,40 +6,40 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CycleController;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('auth')->group(function () {
-    Route::post('/login', [AuthController::class, 'login']);
-    Route::post('/signup', [AuthController::class, 'signup']);
-    Route::post('/verify_email_conformity', [AuthController::class, 'verifyEmailConformity']);
-    Route::post('/forgotten-password', [AuthController::class, 'forgottenPassword']);
-    Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+Route::prefix('auth')->controller(AuthController::class)->group(function () {
+    Route::post('/login', 'login');
+    Route::post('/signup', 'signup');
+    Route::post('/verify_email_conformity', 'verifyEmailConformity');
+    Route::post('/forgotten-password', 'forgottenPassword');
+    Route::post('/reset-password', 'resetPassword');
 });
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::prefix('auth')->group(function () {
-        Route::get('/user', [AuthController::class, 'getUser']);
-        Route::get('/email/make_confirmation', [AuthController::class, 'makeEmailConfirmation']);
-        Route::post('/email/match_code', [AuthController::class, 'matchConfirmationCode']);
+    Route::prefix('auth')->controller(AuthController::class)->group(function () {
+        Route::get('/user', 'getUser');
+        Route::get('/email/make_confirmation', 'makeEmailConfirmation');
+        Route::post('/email/match_code', 'matchConfirmationCode');
     });
 
-    Route::prefix('budget')->group(function () {
-        Route::get('/', [BudgetController::class, 'get']);
-        Route::get('/balance', [BudgetController::class, 'getBalance']);
-        Route::post('/set', [BudgetController::class, 'set']);
+    Route::prefix('budget')->controller(BudgetController::class)->group(function () {
+        Route::get('/', 'get');
+        Route::get('/balance', 'getBalance');
+        Route::post('/set', 'set');
 
         Route::prefix('/category')->group(function () {
-            Route::get('/available', [BudgetController::class, 'getAvailableCategoryBudget']);
+            Route::get('/available', 'getAvailableCategoryBudget');
         });
     });
 
-    Route::prefix('cycle')->group(function () {
-        Route::get('/current', [CycleController::class, 'get']);
-        Route::post('/edit', [CycleController::class, 'edit']);
+    Route::prefix('cycle')->controller(CycleController::class)->group(function () {
+        Route::get('/current', 'get');
+        Route::post('/edit', 'edit');
     });
 
-    Route::prefix('category')->group(function () {
-        Route::get('/currents', [CategoryController::class, 'getCurrents']);
-        Route::delete('/delete/{id}', [CategoryController::class, 'delete']);
-        Route::post('/create', [CategoryController::class, 'add']);
-        Route::post('/edit', [CategoryController::class, 'edit']);
+    Route::prefix('category')->controller(CategoryController::class)->group(function () {
+        Route::get('/currents', 'getCurrents');
+        Route::delete('/delete/{id}', 'delete');
+        Route::post('/create', 'add');
+        Route::post('/edit', 'edit');
     });
 });

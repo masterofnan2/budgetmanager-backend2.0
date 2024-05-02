@@ -12,14 +12,8 @@ class Cycle extends Model
     protected $fillable = [
         'user_id',
         'start_date',
-        'end_date',
-        'renewal_frequency_id'
+        'end_date'
     ];
-
-    public function renewalFrequency()
-    {
-        return $this->belongsTo(RenewalFrequency::class, 'renewal_frequency_id');
-    }
 
     public function user()
     {

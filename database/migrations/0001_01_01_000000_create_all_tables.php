@@ -67,19 +67,12 @@ return new class extends Migration {
             $table->timestamps();
         });
 
-        Schema::create('renewal_frequencies', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('interval', 20)->nullable();
-        });
-
         Schema::create('cycles', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id');
             $table->timestamps();
             $table->timestamp('start_date');
             $table->timestamp('end_date');
-            $table->foreignId('renewal_frequency_id');
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
@@ -107,7 +100,6 @@ return new class extends Migration {
         Schema::dropIfExists('categories');
         Schema::dropIfExists('expenses');
         Schema::dropIfExists('budgets');
-        Schema::dropIfExists('renewal_frequencies');
         Schema::dropIfExists('cycles');
         Schema::dropIfExists('incomes');
         Schema::dropIfExists('confirmation_codes');
